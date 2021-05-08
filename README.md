@@ -46,10 +46,6 @@ This is a malplaced concern as even implementations of efficient, binary seriali
     <p>This viewer does not support PDFs.</p>
 </embed>
 
-### Broker
-RabbitMQ (non-mirrored)
-- [Benchmark](https://www.confluent.io/blog/kafka-fastest-messaging-system/)
-
 ### Signal
 A single traffic signal, e.g. a 3-light signal, and exposes an extremely simple interface.
 The interface includes:
@@ -58,24 +54,27 @@ The interface includes:
 
 ### Controller
 The task of the controller is to receive commands from the scheduler, validate its safety, and forward the command to the signals based on a signal group configuration.
+Each controller only handles exactly one intersection, even for coordinated traffic lights.
 Additionally, the controller observes the response from the signals to check their ability to execute the command.
 
 Safety checks:
 - Conflicting movements
 - Intra- and inter-signal timing
-- 
+- Individual signal health
 
-### Scheduler
-
-
-### Monitor
+### Coordinator
+The coordinator encompasses a single or multiple coordinated intersections.
 
 ### Sensor
+A sensor is defined as on-location sensory equipment for reading the traffic situation.
 - V2I
 - Traffic radar
 - Cameras
 - Pedestrian buttons
 - Detector loops
+
+Not that for sensor equipment not supporting this protocol, it is recommended to develop a stand-alone adaptor rather than letting the coordinator support its direct communication.
+The reason is that a coordinator not implementing proprietary or specific protocols are more prone to a vendor lock-in.
 
 
 ### Supervisor
