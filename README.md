@@ -11,7 +11,7 @@ Yet, this is unachievable with many existing protocols due to vendor lock-ins; e
 Vendors have to implement the open protocols as required and defined by governments, municipalities, and authorities, but as their incentives are to enforce a vendor lock-in, it is a no-brainer to exploit any loophole in a specification.
 
 To combat all forms of vendor lock-in, we employ the best of the internet: open collaboration as is known from many open-source communities. 
-ANY stakeholder including authorities, vendors, universities, traffic engineers, and computer scientists, may suggest a change to the protocol free of charge.
+ANY stakeholder including authorities, vendors, universities, traffic engineers, and computer scientists may suggest a change to the protocol free of charge.
 Similarly, such a requested change should be open for scrutiny from all stakeholders before being accepted.
 
 To avoid a vendor lock-in, the following principles must be obeyed in the design of the protocol:
@@ -51,9 +51,10 @@ A single traffic signal, e.g. a 3-light signal, and exposes an extremely simple 
 The interface includes:
 - Requesting the type of signal including control modes
 - Setting the control mode, i.e. red, red amber, amber, green, bliking yellow, etc. for a standard 3-signal
+- Reading the health of the signal (LEDs, bulb, etc.)
 
 ### Controller
-The task of the controller is to receive commands from the scheduler, validate its safety, and forward the command to the signals based on a signal group configuration.
+The task of the controller is to receive commands from the scheduler, validate its safety, and forward the command to the signals based on a signal group configuration; it is _NOT_ allowed to compute the schedule itself.
 Each controller only handles exactly one intersection, even for coordinated traffic lights.
 Additionally, the controller observes the response from the signals to check their ability to execute the command.
 
@@ -63,7 +64,12 @@ Safety checks:
 - Individual signal health
 
 ### Coordinator
-The coordinator encompasses a single or multiple coordinated intersections.
+The coordinator encompasses a single or multiple coordinated intersections and is the on-location entrypoint for the traffic center software, i.e. supervisors.
+
+The coordinator consists of 3 major components:
+- Management: Managing the topology definition, sensor configuration, etc. This is controllable both from the traffic central and a physical interface.
+- Monitoring: Monitor the health of the components, analyze the sensor data for computing alarms, and perform security surveillance (SIEM).
+- Scheduler: Plan the light schedule for one or more intersections. Can be time schedules, extension-based schedules (by data from the monitoring), or computational tool-based schedules. 
 
 ### Sensor
 A sensor is defined as on-location sensory equipment for reading the traffic situation.
@@ -73,13 +79,21 @@ A sensor is defined as on-location sensory equipment for reading the traffic sit
 - Pedestrian buttons
 - Detector loops
 
-Not that for sensor equipment not supporting this protocol, it is recommended to develop a stand-alone adaptor rather than letting the coordinator support its direct communication.
+Note that for sensor equipment not supporting this protocol, it is recommended to develop a stand-alone adaptor rather than letting the coordinator support its direct communication.
 The reason is that a coordinator not implementing proprietary or specific protocols are more prone to a vendor lock-in.
 
 
 ### Supervisor
-- Multiple supervisors
-- Read-only vs write
+A supervisor is a very generic piece of software. It can be a traffic center system, a public data API, or an operator supervision.
+The core idea is that they can monitor and control the intersection.
+Because of the versatility, the coordinator must be designed for multiple concurrent supervisors.
+
+The interface between the supervisor and the coordinator is split into three topics:
+- Control: The only topic allowed to change the operation of the intersection. This interface should be strictly controlled with authorization (see Cross-cutting concerns -> Security).
+- Health: Useful for operators that maintain but not own the intersection.
+- Data: A forwarding of the sensory data through the coordinator. Useful for traffic center systems or public data APIs.
+
+The reason for splitting the topics is their applicability towards different types of supervisors where the access to each topic should be role dependent.
 
 
 ## Cross-cutting concerns
